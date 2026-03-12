@@ -202,7 +202,6 @@
     <p class="section-desc">發現鳥類撞窗事件？請填寫以下表單，您的紀錄將成為保護鳥類的重要資料。</p>
     <div class="form-card">
       <form id="reportForm" novalidate>
-
         <div class="form-group full" style="margin-bottom:1.5rem">
           <label>事件照片</label>
           <div class="photo-upload">
@@ -213,7 +212,6 @@
           </div>
           <div id="preview-container"></div>
         </div>
-
         <div class="form-grid">
           <div class="form-group full">
             <label>事發位置 <span class="req">*</span></label>
@@ -225,12 +223,10 @@
             <input type="hidden" id="lng" />
             <small id="gpsStatus" style="color:var(--mist);font-size:0.78rem;margin-top:0.3rem;display:block"></small>
           </div>
-
           <div class="form-group">
             <label>事件時間 <span class="req">*</span></label>
             <input type="datetime-local" id="eventTime" required />
           </div>
-
           <div class="form-group">
             <label>窗殺類型 <span class="req">*</span></label>
             <select id="strikeType" required>
@@ -240,7 +236,6 @@
               <option>僅發現羽毛／痕跡</option><option>其他</option>
             </select>
           </div>
-
           <div class="form-group full">
             <label>鳥類名稱 <span class="req">*</span></label>
             <div class="ai-row">
@@ -257,7 +252,6 @@
             <input type="text" id="birdSpecies" placeholder="鳥類中文或英文名稱" required style="margin-top:0.5rem" />
             <input type="hidden" id="identMethod" value="AI" />
           </div>
-
           <div class="form-group">
             <label>建築物類型</label>
             <select id="buildingType">
@@ -266,7 +260,6 @@
               <option>商場</option><option>公共建設</option><option>其他</option>
             </select>
           </div>
-
           <div class="form-group">
             <label>玻璃特性</label>
             <select id="glassType">
@@ -275,7 +268,6 @@
               <option>有防撞貼紙</option><option>不明</option>
             </select>
           </div>
-
           <div class="form-group">
             <label>當時天氣</label>
             <select id="weather">
@@ -284,18 +276,15 @@
               <option>雨天</option><option>霧</option>
             </select>
           </div>
-
           <div class="form-group">
             <label>通報者（選填）</label>
             <input type="text" id="reporter" placeholder="您的姓名或匿名" />
           </div>
-
           <div class="form-group full">
             <label>其他備註</label>
             <textarea id="notes" placeholder="其他觀察細節、現場狀況等..."></textarea>
           </div>
         </div>
-
         <div class="form-submit">
           <button type="submit" class="btn-submit" id="submitBtn">🕊️ 提交通報</button>
         </div>
@@ -558,7 +547,10 @@
       document.getElementById('aiResult').classList.remove('show');
       document.getElementById('eventTime').value =
         new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-      loadRecords(); updateStats();
+
+      // 通報成功後同步更新資料庫、統計、地圖
+      loadRecords(); updateStats(); refreshMap();
+
     } catch (err) {
       showToast('❌ 提交失敗：' + err.message, 'error');
     } finally {
@@ -632,15 +624,28 @@
   }
 
   // ── 地圖 ──
+  let leafletMap = null;
+
   async function initLeafletMap() {
     const mapEl = document.getElementById('leafletMap');
     if (!mapEl) return;
 
-    const map = L.map('leafletMap').setView([24.7021, 121.7377], 13);
+    leafletMap = L.map('leafletMap').setView([24.7021, 121.7377], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19
-    }).addTo(map);
+    }).addTo(leafletMap);
+
+    await refreshMap();
+  }
+
+  async function refreshMap() {
+    if (!leafletMap) return;
+
+    // 清除所有現有標記
+    leafletMap.eachLayer(layer => {
+      if (layer instanceof L.CircleMarker) leafletMap.removeLayer(layer);
+    });
 
     const colorMap = {
       '撞擊後死亡':     '#e74c3c',
@@ -662,7 +667,7 @@
       const marker = L.circleMarker([r.latitude, r.longitude], {
         radius: 10, fillColor: color, fillOpacity: 0.85,
         color: '#ffffff', weight: 2
-      }).addTo(map);
+      }).addTo(leafletMap);
       marker.bindPopup(`
         <div style="font-family:'Noto Sans TC',sans-serif;min-width:180px;line-height:1.8">
           <div style="font-size:1rem;font-weight:700;color:#2c4a6e;margin-bottom:0.4rem">🐦 ${r.bird_species||'未知鳥種'}</div>
@@ -675,7 +680,7 @@
       bounds.push([r.latitude, r.longitude]);
     });
 
-    if (bounds.length > 0) map.fitBounds(bounds, { padding: [40, 40] });
+    if (bounds.length > 0) leafletMap.fitBounds(bounds, { padding: [40, 40] });
   }
 
   // ── 初始化 ──
@@ -685,26 +690,3 @@
 </script>
 </body>
 </html>
-```
-
-點 **Commit changes** 儲存。
-
----
-
-## STEP 5：部署到 Vercel
-
-### 5.1 建立帳號並連結 GitHub
-1. 前往 https://vercel.com → 以 GitHub 登入
-2. **Add New Project** → 選擇 `bird-strike-database` → **Import**
-
-### 5.2 新增環境變數
-部署前點 **Environment Variables**，新增：
-
-| Name | Value | Environment |
-|------|-------|-------------|
-| `GEMINI_KEY` | 你的 Gemini API Key | 三個都勾 |
-
-### 5.3 部署
-點 **Deploy** → 等待約 1 分鐘 → 取得網址：
-```
-https://bird-strike-database.vercel.app

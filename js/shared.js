@@ -1,8 +1,8 @@
 // ════════════════════════════════
 //  ⚙️ 填入你的 Supabase 金鑰
 // ════════════════════════════════
-const SUPABASE_URL = 'https://qutbosfzphqkfbnowafc.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1dGJvc2Z6cGhxa2Zibm93YWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMTQ2ODAsImV4cCI6MjA4ODg5MDY4MH0.NwJ4yIMu391YJZvs7ccGrRMkoux_U-9NfRS0fCORYZ4';
+const SUPABASE_URL = 'https://kpybeibtetdioppkuxuf.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtweWJlaWJ0ZXRkaW9wcGt1eHVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0ODMzMjMsImV4cCI6MjA4OTA1OTMyM30.nM6B2-6nrZYSqspF4XHi3eEOs56QpM7Dj_odSRA3BWE';
 // ════════════════════════════════
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
